@@ -1,0 +1,104 @@
+,Brand,Model,AccelSec,TopSpeed_KmH,Range_Km,Efficiency_WhKm,connector
+0,Tesla ,Model 3 Long Range Dual Motor,4.6,233,450,161,100
+1,Volkswagen ,ID.3 Pure,10.0,160,270,167,101
+2,Polestar ,2,4.7,210,400,181,102
+3,BMW ,iX3 ,6.8,180,360,206,103
+4,Honda ,e ,9.5,145,170,168,104
+5,Lucid ,Air ,2.8,250,610,180,105
+6,Volkswagen ,e-Golf ,9.6,150,190,168,106
+7,Peugeot ,e-208 ,8.1,150,275,164,107
+8,Tesla ,Model 3 Standard Range Plus,5.6,225,310,153,108
+9,Audi ,Q4 e-tron ,6.3,180,400,193,109
+10,Mercedes ,EQC 400 4MATIC,5.1,180,370,216,110
+11,Nissan ,Leaf ,7.9,144,220,164,111
+12,Hyundai ,Kona Electric 64 kWh,7.9,167,400,160,112
+13,BMW ,i4 ,4.0,200,450,178,113
+14,Hyundai ,IONIQ Electric,9.7,165,250,153,114
+15,Volkswagen ,ID.3 Pro S,7.9,160,440,175,115
+16,Porsche ,Taycan Turbo S,2.8,260,375,223,116
+17,Volkswagen ,e-Up! ,11.9,130,195,166,117
+18,MG ,ZS EV,8.2,140,220,193,118
+19,Mini ,Cooper SE ,7.3,150,185,156,119
+20,Opel ,Corsa-e ,8.1,150,275,164,120
+21,Tesla ,Model Y Long Range Dual Motor,5.1,217,425,171,121
+22,Skoda ,Enyaq iV 50,10.0,160,290,179,122
+23,Audi ,e-tron GT ,3.5,240,425,197,123
+24,Tesla ,Model 3 Long Range Performance,3.4,261,435,167,124
+25,Volkswagen ,ID.4 ,7.5,160,420,183,125
+26,Volkswagen ,ID.3 Pro,9.0,160,350,166,126
+27,Volvo ,XC40 P8 AWD Recharge,4.9,180,375,200,127
+28,BMW ,i3 120 Ah,7.3,150,235,161,128
+29,Peugeot ,e-2008 SUV ,8.5,150,250,180,129
+30,Audi ,e-tron 50 quattro,6.8,190,280,231,130
+31,Kia ,e-Niro 64 kWh,7.8,167,370,173,131
+32,Renault ,Zoe ZE50 R110,11.4,135,315,165,132
+33,Tesla ,Cybertruck Tri Motor,3.0,210,750,267,133
+34,Mazda ,MX-30 ,9.0,150,180,178,134
+35,Nissan ,Leaf e+,7.3,157,325,172,135
+36,Lexus ,UX 300e,7.5,160,270,193,136
+37,CUPRA ,el-Born ,6.5,160,425,181,137
+38,Renault ,Zoe ZE50 R135,9.5,140,310,168,138
+39,Mercedes ,EQA ,5.0,200,350,171,139
+40,Tesla ,Model S Long Range,3.8,250,515,184,140
+41,Hyundai ,Kona Electric 39 kWh,9.9,155,255,154,141
+42,Audi ,e-tron Sportback 55 quattro,5.7,200,380,228,142
+43,Skoda ,CITIGOe iV ,12.3,130,195,166,143
+44,SEAT ,Mii Electric ,12.3,130,195,166,144
+45,Kia ,e-Soul 64 kWh,7.9,167,365,175,145
+46,Opel ,Ampera-e ,7.3,150,335,173,146
+47,Porsche ,Taycan 4S,4.0,250,365,195,147
+48,Lightyear ,One ,10.0,150,575,104,148
+49,Aiways ,U5 ,9.0,150,335,188,149
+50,Audi ,e-tron 55 quattro,5.7,200,365,237,150
+51,Tesla ,Roadster ,2.1,410,970,206,151
+52,Opel ,Mokka-e ,8.5,150,255,176,152
+53,Skoda ,Enyaq iV 80,8.8,160,420,183,153
+54,Tesla ,Model X Long Range,4.6,250,450,211,154
+55,Honda ,e Advance,8.3,145,170,168,155
+56,DS ,3 Crossback E-Tense,8.7,150,250,180,156
+57,Renault ,Twingo ZE,12.6,135,130,164,157
+58,Citroen ,e-C4 ,9.7,150,250,180,158
+59,Tesla ,Model S Performance,2.5,261,505,188,159
+60,Renault ,Zoe ZE40 R110,11.4,135,255,161,160
+61,Tesla ,Model Y Long Range Performance,3.7,241,410,177,161
+62,Nissan ,Ariya 87kWh,7.6,160,440,198,162
+63,Jaguar ,I-Pace ,4.8,200,365,232,163
+64,Ford ,Mustang Mach-E ER RWD,7.0,180,450,200,164
+65,Porsche ,Taycan 4S Plus,4.0,250,425,197,165
+66,Nissan ,e-NV200 Evalia ,14.0,123,190,200,166
+67,Tesla ,Cybertruck Dual Motor,5.0,190,460,261,167
+68,Renault ,Kangoo Maxi ZE 33,22.4,130,160,194,168
+69,Ford ,Mustang Mach-E ER AWD,6.0,180,430,209,169
+70,BMW ,i3s 120 Ah,6.9,160,230,165,170
+71,Skoda ,Enyaq iV 80X,7.0,160,400,193,171
+72,Porsche ,Taycan Cross Turismo ,3.5,250,385,217,172
+73,Byton ,M-Byte 95 kWh 4WD,5.5,190,390,244,173
+74,Sono ,Sion ,9.0,140,225,156,174
+75,Kia ,e-Niro 39 kWh,9.8,155,235,167,175
+76,Audi ,Q4 Sportback e-tron ,6.3,180,410,188,176
+77,Smart ,EQ forfour ,12.7,130,95,176,177
+78,Ford ,Mustang Mach-E SR AWD,6.0,180,340,206,178
+79,Porsche ,Taycan Turbo,3.2,260,390,215,179
+80,Volkswagen ,ID.3 1st,7.3,160,340,171,180
+81,Tesla ,Model X Performance,2.8,250,440,216,181
+82,Smart ,EQ fortwo coupe,11.6,130,100,167,182
+83,Ford ,Mustang Mach-E SR RWD,6.6,180,360,194,183
+84,Mercedes ,EQV 300 Long,10.0,140,330,273,184
+85,Fiat ,500e Hatchback,9.0,150,250,168,185
+86,Tesla ,Cybertruck Single Motor,7.0,180,390,256,186
+87,Audi ,e-tron Sportback 50 quattro,6.8,190,295,219,187
+88,Skoda ,Enyaq iV vRS,6.2,180,400,193,188
+89,Skoda ,Enyaq iV 60,9.0,160,320,181,189
+90,Audi ,e-tron S 55 quattro,4.5,210,320,270,190
+91,Smart ,EQ fortwo cabrio,11.9,130,95,176,191
+92,Kia ,e-Soul 64 kWh,7.9,167,365,175,192
+93,Nissan ,Ariya e-4ORCE 87kWh,5.7,200,420,207,193
+94,Fiat ,500e Convertible,9.0,150,250,168,194
+95,Volkswagen ,ID.3 Pro Performance,7.3,160,340,171,195
+96,Kia ,e-Soul 39 kWh,9.9,157,230,170,196
+97,Byton ,M-Byte 72 kWh 2WD,7.5,190,325,222,197
+98,Nissan ,Ariya 63kWh,7.5,160,330,191,198
+99,Audi ,e-tron S Sportback 55 quattro,4.5,210,335,258,199
+100,Nissan ,Ariya e-4ORCE 63kWh,5.9,200,325,194,200
+101,Nissan ,Ariya e-4ORCE 87kWh Performance,5.1,200,375,232,201
+102,Byton ,M-Byte 95 kWh 2WD,7.5,190,400,238,202
