@@ -1,0 +1,1080 @@
+---
+title: "Abschlussprojekt - Students Performance"
+output: 
+  html_document:
+    theme: cosmo
+    highlight: tango
+    toc: true
+    toc_depth: 4
+    toc_float:
+      collapsed: false
+---
+
+
+**Mehrfaktorielle Varianzanalyse (ohne Messwiederholung)**
+
+## Aufgabenstellung 
+
+Welchen Einfluss hat die Teilnahme in dem Prüfungsvorbereitungskurs und das Bildungsniveau der Eltern (high school, college, university) auf die Gesamtzahl der Leistungspunkte (total_score) der Studenten?
+Gibt es einen Unterschied?
+
+**Daten:**
+
+***Variable 1***: test_prep_course (Haupteffekt A: none/completed) <br/>
+***Variable 2:*** parental_level_of_edu (Haupteffekt B: high school, college, university)<br/>
+***Varibale 3:*** total_score (abhängige Variable)<br/>
+
+
+**Anzahl Gruppen:**
+
+Treatments_Haupteffekt_A x Treatments_Haupteffekt_B 
+
+k = 2 x 3 = ***6 Gruppen***
+
+**Anzahl Vergleiche:**
+
+$$N_{ gr }= k(k-1) / 2$$
+
+N = 6 x 5 / 2 = ***15 Kombi***
+  
+  
+**Fest oder zufällige Faktoren:**
+
+Die unabhängige Variablen sind ***fest***. Alle Stufen der UV sind umgesetzt.
+
+
++ 1)  Daten-Import und Vorbereitung
++ 2)	Hypothese 
++ 3)	Voraussetzungen
++ 4)	Grundlegende Konzepte: Was ist Pearson? 
++ 5)  Prüfung der Normalverteilung
++ 6)  Boxplot
++ 7)	Deskriptive Statistik
++ 8)  Profildiagramm
++ 9)  Levene-Test (Homogenität der Varianzen prüfen)
++ 10) Ergebnisse der mehrfaktorielle Varianzanalyse (ohne Messwiederholung)
++ 11) Post-Hoc-Test
++ 12) Das par. Eta-Quadrat
++ 13)	Berechnung der Effektstärke
++ 14)	Aussage
+
+
+## Benötigte Libraries
+
+```{r, results = FALSE, message=FALSE, warning=FALSE}
+library(readr)
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+library(car)
+library(ggthemes) 
+library('knitr')
+```
+
+
+## **1. Daten-Import und Vorbereitung**
+
+### Daten einlesen
+```{r, message=FALSE, warning=FALSE}
+students <- read_csv("D:/Data Science/Weiterbildung AT/Datasets/Students/StudentsPerformance.csv")
+
+kable(head(students), format = "markdown")
+```
+
+### Spalten unbenennen
+```{r}
+
+students <- students %>% 
+    rename('race_ethnicity' ='race/ethnicity',
+           'parental_level_of_edu' = 'parental level of education',
+           'test_prep_course' =  'test preparation course',
+           'math_score' = 'math score',
+           'reading_score' = 'reading score', 
+           'writing_score' = 'writing score')
+#head(students)
+```
+
+### total_score Spalte erstellen
+
+```{r}
+students$total_score = students$math_score + students$reading_score + students$writing_score
+```
+
+### Anzahl der Spalten und Zeilen speichern
+
+```{r}
+cols <- names(students)
+cols
+
+rows <- nrow(students)
+rows
+```
+### Anzahl der NA Werten
+
+```{r}
+sum(is.na(students))
+
+```
+
+
+### Daten Übersicht
+
+```{r}
+kable(head(students), format = "markdown")
+```
+
+
+*Character/String Spalten mit Namen:*<br/> 
+
++ 'gender'
++ 'parental_level_of_edu'
++ 'test_prep_course'
++ 'race_ethnicity'
++ 'lunch'
+
+Diese Spalten besitzen (mehrfach) nur folgende Elemente:
+
+```{r}
+cat(paste(
+  "'gender':", paste(unique(students$gender), collapse=", "),
+  "\n'parental_level_of_edu':", paste(unique(students$parental_level_of_edu), collapse = ", "),
+  "\n'test_prep_course':", paste(unique(students$test_prep_course), collapse = ", "),
+  "\n'race_ethnicity':", paste(unique(students$race_ethnicity), collapse = ", "),
+  "\n'lunch':", paste(unique(students$lunch), collapse = ", ")))
+
+```
+
+Wählen nur notwendige Spalte aus
+```{r}
+students <- select(students, "test_prep_course", "parental_level_of_edu", "total_score")
+kable(head(students), format = "markdown")
+```
+```{r echo = FALSE}
+students_test <- students
+```
+
+
+### Gruppen zusammenlegen
+
+
+```{r}
+stat_edu <- students %>%
+group_by(parental_level_of_edu) %>%
+summarize(Anzahl = n(), Mittelwert = mean(total_score), Median = median(total_score), Standardabweichung = sd(total_score)) %>%
+mutate_if(is.numeric, round, 2)
+
+# sortieren nach dem Mittelwert
+kable(stat_edu[ order(stat_edu$Mittelwert), ], format = "markdown")
+```
+
+"high school", "some high school" => "high school" <br/>
+"some college", "associate's degree" => "college" <br/>
+"bachelor's degree", "master's degree" => "university" <br/>
+
+```{r}
+students <- students %>% mutate(parental_level_of_edu = ifelse(as.character(parental_level_of_edu) %in% c("high school", "some high school"), "high school", as.character(parental_level_of_edu)))
+
+students <- students %>% mutate(parental_level_of_edu = ifelse(as.character(parental_level_of_edu) %in% c("some college", "associate's degree"), "college", as.character(parental_level_of_edu)))
+
+students <- students %>% mutate(parental_level_of_edu = ifelse(as.character(parental_level_of_edu) %in% c("bachelor's degree", "master's degree"), "university", as.character(parental_level_of_edu)))
+#head(students)
+```
+
+
+```{r}
+stat_edu <- students %>%
+group_by(parental_level_of_edu) %>%
+summarize(Anzahl = n(), Mittelwert = mean(total_score), Median = median(total_score), Standardabweichung = sd(total_score)) %>%
+mutate_if(is.numeric, round, 2)
+
+# sortieren nach dem Mittelwert
+kable(stat_edu[ order(stat_edu$Mittelwert), ], format = "markdown")
+```
+
+Für spätere bessere Plot-Darstellung: Ändern der Reihenfolge in 'parental_level_of_edu' (**aufsteigende Mittelwerte**)
+
+```{r}
+# aufsteigende Mittelwerte
+students$parental_level_of_edu<-factor(students$parental_level_of_edu, 
+levels=c("high school", "college", "university")) 
+
+students$test_prep_course<-factor(students$test_prep_course, levels=c("none", "completed"))
+```
+
+
+## **2.	Hypothese**
+
+#### **Haupteffekt A** - Prüfungsvorbereitungskurs ('test_prep_course'):
+
+**H0:** Es gibt **keinen Unterschied** zwischen der Teilnahme in dem Prüfungsvorbereitungskurs ('test_prep_course') und der Gesamtzahl der Leistungspunkte (total_score) der Studenten **(Mn = Mc)**
+
+**H1:** Es gibt **einen Unterschied** zwischen der Teilnahme in dem Prüfungsvorbereitungskurs ('test_prep_course') und der Gesamtzahl der Leistungspunkte (total_score) der Studenten **(Mn ≠ Mc)**
+
+
+#### **Haupteffekt B** - Bildungsniveau der Eltern ('parental_level_of_edu'):
+
+**H0:** Es gibt **keinen Unterschied** zwischen dem Bildungsniveau der Eltern (parental_level_of_edu) und der Gesamtzahl der Leistungspunkte (total_score) der Studenten  **(Mhs = Mc = Mu)** 
+
+**H1:** Es gibt **einen Unterschied** zwischen dem Bildungsniveau der Eltern (parental_level_of_edu) und der Gesamtzahl der Leistungspunkte (total_score) der Studenten **(Mhs ≠ Mc ≠ Mu min. einen Vergleich)**
+
+
+#### **Interaktion A x B** ('test_prep_course' X 'parental_level_of_edu'):
+
+**H0:** Es gibt **keinen Unterschied** im Mittelwert zwischen der Interaktion von der Teilnahme in dem Prüfungsvorbereitungskurs ('test_prep_course') und dem Bildungsniveau der Eltern (parental_level_of_edu) auf die Gesamtzahl der Leistungpunkte (total_score) der Studenten.
+
+**H1:** Es gibt **einen Unterschied** im Mittelwert zwischen der Interaktion von der Teilnahme in dem Prüfungsvorbereitungskurs ('test_prep_course') und dem Bildungsniveau der Eltern (parental_level_of_edu) auf die Gesamtzahl der Leistungpunkte (total_score) der Studenten.
+          
+
+
+## **3. Voraussetzungen**
+
++ Die abhängige Variable ist min. intervallskaliert  
+Die abhängige Variable "total_score" ist ratioskaliert - metrisch.  
+
++ Die unabhängigen Variablen (Faktoren) sind kategorial (nominal- oder ordinalskaliert)
+Die unabhängige Variable (Faktor) "test_prep_course" ist nominal und "parental_level_of_edu" ist ordinalskaliert.  
+
++	Die durch die Faktoren gebildeten Gruppen sind unabhängig
+Die Unabhängigkeit ist gegeben, da die teilnehmenden Personen nichts miteinander zu tun haben bzw. aufeinander keinen Einfluss nehmen.
+
++	Die abhängige Variable ist normalverteilt innerhalb jeder der Gruppen.  
+Ab 25 Probanden pro Gruppe sind Verletzungen dieser Voraussetzung unproblematisch.  
+--> Siehe Histogramme
+
++	Homogenität der Varianzen: Die Gruppen stammen aus Grundgesamtheiten mit annähernd identischen Varianzen der abhängigen Variablen.   
+--> siehe Levene-Test
+
+## **4.	Grundlegende Konzepte**
+
+Die einfaktorielle Varianzanalyse mit Messwiederholung testet, ob sich die Mittelwerte mehrerer abhängiger Gruppen (oder Stichproben) unterscheiden.
+
+Die einfaktorielle Varianzanalyse mit Messwiederholung stellt eine Verallgemeinerung des t-Tests für abhängige Stichproben (oder Gruppen) für mehr als zwei Gruppen dar. Der Begriff "Varianzanalyse" wird wie bei allen Varianzanalysen oft mit "ANOVA" abgekürzt, da sie in Englisch "Analysis of variance" bezeichnet wird. 
+
+Mittels einer Varianzanalyse mit Messwiederholung können – obwohl der Name sich explizit auf Messwiederholungen bezieht – alle drei Typen von abhängigen Daten untersucht werden, also auch natürliche Paarungen oder einander zugeordnete Personen. Im Fokus der Analyse stehen die Unterschiede zwischen den jeweils verbundenen Messwerten. Oft wird ein Verlauf über die Zeit untersucht: Es wird zum Beispiel zu verschiedenen Zeitpunkten während eines Treatments (z.B. eine Diät, eine Therapie) dessen Erfolg gemessen (z.B. eine Gewichtsreduktion, Depressionswerte). Die Varianzanalyse betrachtet nun die Veränderung innerhalb der Personen und prüft, ob sich die Messzeitpunkte signifikant unterscheiden. Die Unterschiede zwischen den Personen sind dabei von untergeordneter Bedeutung.
+
+Die einzelnen Messzeitpunkte werden gelegentlich als "Faktorstufen" oder "Treatments" bezeichnet, besonders wenn nicht eine Entwicklung über die Zeit, sondern lediglich ein Vergleich der Messungen das Ziel ist. Dies ist beispielsweise der Fall, wenn verschiedene Prognosemethoden der Krankheitsdauer miteinander verglichen werden. Entsprechend wird bei einer Messwiederholung auch von einem "Faktor" gesprochen. Als "einfaktoriell" wird eine Varianzanalyse mit Messwiederholung bezeichnet, wenn sie lediglich einen Faktor, also einen Messwiederholungs-Faktor, verwendet.
+
+Die Fragestellung der einfaktoriellen Varianzanalyse mit Messwiederholung wird oft so verkürzt: "Unterscheiden sich die Mittelwerte einer abhängigen Variable zwischen mehreren abhängigen Gruppen, resp. Messzeitpunkten?" 
+
+
+**Beispiele zur Fragestellungen:**
+
+  + Wie verändert sich das Fettanteil des Körpers im Verlaufe einer dreimonatigen Boxtraining mit drei Einheiten pro Woche? Dabei wird das Fettanteil des Körpers jeden Woche erhoben.
+  + Wie wirken sich die Verhaltenstherapie auf Nikotinsucht bei Kettenrauchern aus? Der Therapierfolg wird zu sechs Messzeitpunkten über ein halbes Jahr erhoben.
+  + Wie verändern sich die Umsatz eines Produkts nach der Schaltung eines Werbespots im Regionalfernsehen? Die Verkaufszahlen werden dabei vor der Ausstrahlung, kurz danach, sowie 2 und 4 Monate danach erhoben.
+
+**Voraussetzungen der einfaktoriellen Varianzanalyse mit Messwiederholung:**
+
+  + Die **abhängige Variable** ist **intervallskaliert**
+  + Die **abhängige Variable** ist **normalverteilt innerhalb jedes Messzeitpunktes** (**Ab > 25 Probanden pro Messzeitpunkt sind Verletzungen in der Regel unproblematisch**)
+  + **Sphärizität** ist gegeben (Mauchly-Test auf Sphärizität)
+  + Es liegen **min. drei verbundene Stichproben oder Gruppen** vor, **aber die verschiedenen Messwertpaare sind voneinander unabhängig** 
+  
+
+**Die Grundidee der Varianzanalyse:**
+
+
+Ein Blick auf die Gruppenmittelwerte der Beispieldaten zeigt, dass sich die Mittelwerte unterscheiden. Um zu überprüfen, ob die Unterschiede signifikant sind, wird eine Varianzanalyse durchgeführt.
+
+**Nullhypothese Haupteffekt A**
+
+Die Populuationmittelwerte beispielsweise in den drei Alkoholgehaltsstufen sind gleich. Es gibt keinen Unterschied zwischen den unterschiedlichen Alkoholgehaltsstufen.
+
+**Alternativhypothese Haupteffekt A**
+
+Die Populuationmittelwerte beispielsweise in den drei Alkoholgehaltsstufen sind verschiedene. Es gibt einen Unterschied zwischen den unterschiedlichen Alkoholgehaltsstufen- mindestens eine Stufe unterscheidet sich.
+
+**Nullhypothese Haupteffekt B**
+
+Die Populuationmittelwerte beispielsweise in den zwei Geschlechtersstufen sind gleich. Es gibt keinen Unterschied zwischen den unterschiedlichen Geschlechtersstufen.
+
+**Alternativhypothese Haupteffekt B**
+
+Die Populuationmittelwerte beispielsweise in den zwei Geschlechtersstufen sind verschiedene. Es gibt einen Unterschied zwischen den unterschiedlichen Geschlechtersstufen- mindestens eine Stufe unterscheidet sich.
+Zerlegung der individuellen Messwerte
+
+
+Im Unterschied zur einfaktoriellen Varianzanalyse wird hier der Effekt der Gruppenzugehörigkeiten weiter aufgeteilt, da mehr als ein Faktor vorliegt: Es wird jedem der Faktoren und jeder Interaktion zwischen den Faktoren ein Anteil zugeordnet. Damit ist ein ebenfalls neues Thema angesprochen: Interaktionseffekte.
+
+**Haupteffekte und Interaktionseffekte:**
+
+Der direkte Effekt eines Faktors auf die abhängige Variable wird als Haupteffekt bezeichnet. Im Beispiel sind dies der Haupteffekt der Alkoholgehalt und der Haupteffekt des Geschlechts. Eine Interaktion zweier Faktoren dagegen bedeutet, dass die beiden Faktoren in komplexer Weise zusammenwirken. Dies ist nicht rein additiv zu verstehen. Liegt eine Interaktion vor, so ist die Wirkung des einen Faktors abhängig von der Ausprägung des anderen Faktors und umgekehrt. Im Beispiel gesprochen hiesse dies, dass der Effekt des Geschlechts auf die Anzahl der gesungen Songs sich je nach Alkoholgehalt unterscheidet, und umgekehrt, dass der Effekt der Alkoholgehalt je nach Geschlecht unterschiedlich ausfiele.
+
+R schliesst automatisch alle möglichen Interaktionen in das Modell mit ein: Bei zwei Faktoren A und B ist dies die Interaktion A x B. Bei drei Faktoren A, B und C sind dies die Interaktion A x B, A x C, B x C sowie die Dreifachinteraktion A x B x C.
+
+  
+
+**Signifikanz der Teststatistik:**
+
+Je mehr Variation durch die Messwiederholung erklärt wird, desto höher fällt der F-Wert aus (da QSTreatment ein Mass für erklärte Varianz darstellt, während QSResidual ein Mass für Residualvarianz darstellt). Dieser F-Wert wird mit dem kritischen Wert auf einer durch die Freiheitsgrade dfTreatment und dfResidual charakterisierten F-Verteilung verglichen. Ist der F-Wert höher als der kritische Wert, so ist der Test signifikant. 
+
+
+## **5. Prüfung der Normalverteilung**
+
+
+#### Histogramme: Teilnahme in dem Prüfungsvorbereitungskurs ('test_prep_course')
+
+```{r}
+
+students %>%
+  group_by(test_prep_course) %>%
+  ggplot(aes(total_score, fill = factor(test_prep_course))) + 
+  geom_histogram(bins = 20) +
+  facet_wrap(~test_prep_course) +
+  theme_grey()+
+  labs(x= "Gesamtzahl der Leistungspunkte der Studenten (total_score)",y = "Anzahl", fill = "Prüfungsvorbereitungskurs" )
+
+
+```
+
+```{r}
+
+qqPlot(total_score~test_prep_course, data = students)
+
+```
+
+**Die abhängige Variable ist normalverteilt innerhalb jeder Gruppe.**
+
+
+
+#### Histogramme: Bildungsniveau der Eltern (parental_level_of_edu)
+
+```{r}
+
+students %>%
+  group_by(parental_level_of_edu) %>%
+  ggplot(aes(total_score, fill = factor(parental_level_of_edu))) + 
+  geom_histogram(bins = 20) +
+  facet_wrap(~parental_level_of_edu) +
+  theme_grey()+
+  labs(x= "Gesamtzahl der Leistungspunkte der Studenten (total_score)",y = "Anzahl", fill = "Bildungsniveau" )
+
+```
+```{r}
+
+qqPlot(total_score~parental_level_of_edu, data = students)
+
+```
+
+**Die abhängige Variable ist normalverteilt innerhalb jeder Gruppe.**
+
+
+
+#### Histogramme: test_prep_course X parental_level_of_edu
+
+Gesamt-Einfluss von der Teilnahme in dem Prüfungsvorbereitungskurs ('test_prep_course') und dem Bildungsniveau der Eltern (parental_level_of_edu) auf die Gesamtzahl der Leistungpunkte (total_score) der Studenten.
+
+```{r}
+ggplot(students, aes(x=total_score, fill = factor(parental_level_of_edu)))+
+  geom_histogram(bins = 15)+
+  theme_grey()+
+  facet_wrap(test_prep_course~parental_level_of_edu, ncol = 3)+
+  labs(x= "Gesamtzahl der Leistungspunkte der Studenten (total_score)",y = "Anzahl", fill = "Bildungsniveau" )
+```
+
+**Die abhängige Variable ist normalverteilt innerhalb jeder Gruppe.**
+
+
+Ab 25 Teilnehmer pro Gruppe ist das Testverfahren robust.<br/>
+Dies gilt auch hier, da in den jeweiligen Gruppen immer jeweils 25 Teilnehmer vorhanden sind.  
+
+
+## **6. Boxplot** 
+
+Boxplot hier nur zur Info (bessere Visualisierung der Gesamt-Zusammenhänge).
+
+
+```{r}
+ggplot(students, 
+       aes(x = test_prep_course, 
+           y = total_score, 
+           fill=factor(test_prep_course))
+       ) +
+  geom_boxplot() +
+  theme(panel.background = element_rect(size = 0.5, fill = "gray91", colour = "gray", linetype='solid'),
+        panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "darkgray"),
+        panel.grid.minor = element_line(size = 0.5, linetype = 'solid', colour = "gray"),
+        )+
+  labs(x="Prüfungsvorbereitungskurs", y="Gesamtzahl der Leistungpunkte der Studenten", fill = "Prüfungsvorbereitungskurs")
+
+
+```
+
+
+
+
+```{r}
+ggplot(students, 
+       aes(x = parental_level_of_edu, 
+           y = total_score, 
+           fill=factor(parental_level_of_edu))
+       ) +
+  geom_boxplot() +
+  theme(panel.background = element_rect(size = 0.5, fill = "gray91", colour = "gray", linetype='solid'),
+        panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "darkgray"),
+        panel.grid.minor = element_line(size = 0.5, linetype = 'solid', colour = "gray"),
+        axis.text.x=element_text(color = "black", size=11, angle=30, vjust=.8, hjust=0.8))+
+  
+  labs(x="Bildungsniveau der Eltern", y="Gesamtzahl der Leistungpunkte der Studenten", fill = "Bildungsniveau")
+```
+
+
+```{r}
+ggplot(students, 
+       aes(x = test_prep_course, 
+           y = total_score, 
+           fill=factor(parental_level_of_edu))
+       ) +
+  geom_boxplot() +
+  theme(panel.background = element_rect(size = 0.5, fill = "gray91", colour = "gray", linetype='solid'),
+        panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "darkgray"),
+        panel.grid.minor = element_line(size = 0.5, linetype = 'solid', colour = "gray"),
+        )+
+  labs(x="Prüfungsvorbereitungskurs", y="Gesamtzahl der Leistungpunkte der Studenten", fill = "Bildungsniveau")
+```
+
+**Die Boxplots überlappen sich. Es gibt einige Ausreißer **
+
+
+## **7. Deskriptive Statistiken**
+
+### Der Einfluss der Teilnahme in dem Prüfungsvorbereitungskurs auf die Gesamtzahl der Leistungpunkte
+
+```{r}
+summarize1 <- students %>%
+group_by(test_prep_course) %>%
+summarize(Anzahl = n(), Mittelwert = mean(total_score), Median = median(total_score), Standardabweichung = sd(total_score)) %>%
+mutate_if(is.numeric, round, 2)
+
+# sortieren nach dem Mittelwert
+kable(summarize1[ order(summarize1$Mittelwert), ])
+```
+
+Der Einfluss der Teilnahme in dem Prüfungsvorbereitungskurs auf die Gesamtzahl der Leistungpunkte ist wie folgt zu sehen:
+
++ Die Studenten, die in dem Prüfungsvorbereitungskurs **teilgenommen hat**, haben die **höheren** gesamten Leistungspunkte **(MW = 218.01 , SD = 39.11, n = 358)**.  
++ Die Studenten, die in dem Prüfungsvorbereitungskurs **nicht teilgenommen hat**, haben die **niedrigieren** gesamten Leistungspunkte   **(MW = 195.12 , SD = 42.56, n = 642)**.
+
+Die Gruppen sind ungleich groß (n1 = 358 und n2 = 642)
+
+
+### Der Einfluss dem Bildungsniveau der Eltern auf die Gesamtzahl der Leistungpunkte
+
+
+```{r}
+summarize1 <- students %>%
+group_by(parental_level_of_edu) %>%
+summarize(Anzahl = n(), Mittelwert = mean(total_score), Median = median(total_score), Standardabweichung = sd(total_score)) %>%
+mutate_if(is.numeric, round, 2)
+
+# sortieren nach dem Mittelwert
+kable(summarize1[ order(summarize1$Mittelwert), ])
+```
+
+Der Einfluss des Bildungsniveaus der Eltern auf die Gesamtzahl der Leistungspunkte ist wie folgt zu sehen:
+
++ Bei Studenten, deren Eltern den **"high school"** Abschluss haben, die gesamten Leistungspunkte sind **am geringsten** **(MW = 192.17 , SD = 42.75, n = 375)**.  
++ Bei Studenten, deren Eltern den **"college"** Abschluss haben, die gesamten Leistungspunkte liegt **in der Miette** **(MW = 207.05 , SD = 41.06, n = 448)**.
++ Bei Studenten, deren Eltern den **"university"** Abschluss haben, die gesamten Leistungspunkte sind **am höchsten** **(MW = 217.45 , SD =  41.45, n = 177)**.  
+
+Die Gruppen sind ungleich groß (n1 = 375, n2 = 448, n3 = 177)
+
+### Interaktion von der Teilnahme in dem Prüfungsvorbereitungskurs und dem Bildungsniveau der Eltern bezüglich der Gesamtzahl der Leistungspunkte
+
+```{r, message=FALSE, warning=FALSE}
+summarize1 <- students %>%
+  group_by(test_prep_course, parental_level_of_edu) %>%
+  summarize(Anzahl = n(), 
+            Mittelwert = mean(total_score), 
+            Median = median(total_score), 
+            Standardabweichung = sd(total_score)
+            ) %>%
+  mutate_if(is.numeric, round, 2)
+
+# sortieren nach dem Mittelwert
+kable(summarize1[ order(summarize1$Mittelwert), ])
+
+```
+  + Bei Studenten, die im Prüfungsvorbereitungskurs **nicht teilgenommen** haben und deren Eltern den **"high school"** Abschluss haben, die gesamten Leistungspunkte sind **am geringsten** **(MW = 185.11 , SD = 43.23, n = 242)**. 
+  
+  + Bei Studenten, die im Prüfungsvorbereitungskurs **nicht teilgenommen** haben und deren Eltern den **"college"** Abschluss haben, die gesamten Leistungspunkte sind **schon etwas höher** **(MW = 197.51 , SD = 40.62, n = 289)**.
+  
+  + Bei Studenten, die im Prüfungsvorbereitungskurs **teilgenommen** haben und deren Eltern den **"high school"** Abschluss haben, die gesamten Leistungspunkte liegen **in der Miette** **(MW = 205.02 , SD = 38.82, n = 133)**.
+  
+  + Bei Studenten, die im Prüfungsvorbereitungskurs **nicht teilgenommen** haben und deren Eltern den **"university"** Abschluss haben, die gesamten Leistungspunkte liegen **in der Miette** **(MW = 210.70 , SD = 40.73, n = 111)**.
+  
+  + Bei Studenten, die im Prüfungsvorbereitungskurs **teilgenommen** haben und deren Eltern den **"college"** Abschluss haben, die gesamten Leistungspunkte sind **schon relativ hoch** **(MW = 224.40 , SD = 35.94, n = 159)**.
+  
+  + Bei Studenten, die im Prüfungsvorbereitungskurs **teilgenommen** haben und deren Eltern den **"university"** Abschluss haben, die gesamten Leistungspunkte sind **am höchsten** **(MW = 228.79 , SD = 40.45, n = 66)**.
+
+
+Man kann deutlich erkennen, dass das Bildungsniveau der Eltern in jeder Gruppe unabhängig von, ob die Studenten in Prüfungsvorbereitungskurs teilgenohmen hat oder nicht, einen postiven Einfluss auf die Gesamtzahl der Leistungspunkte besitzt. 
+
+Der Einfluss der Teilnahme in dem Prüfungsvorbereitungskurs auf die Gesamtzahl der Leistungspunkte ist auch deutlich. Man kann offensichtlichen Unterschied bei jeder Gruppe in Spalte "parental_level_of_edu" sehen.
+
+
+## **8. Profildiagramm**
+
+
+```{r}
+
+ggplot(students, aes(x=parental_level_of_edu, y=total_score, group=test_prep_course, 
+  colour = test_prep_course))+
+  stat_summary(fun = mean, geom="point", size=3)+
+  stat_summary(fun = mean, geom="line")+
+  stat_summary(fun.data = mean_cl_normal, geom="errorbar",width=.2, size=.25)+
+  stat_summary(aes(label=round(..y..,2)), 
+               fun ='mean', 
+               geom="text", 
+               size=3,
+               position = position_nudge(x = -0.25, y = 1.75)
+               )+
+  labs(title = "Bildungsniveau der Eltern in Abhängigkeit\nvon der Teilnahme in dem Prüfungsvorbereitungskurs",
+    x="Bildungsniveau der Eltern", y="Gesamtzahl der Leistungpunkte der Studenten", fill = "Prüfungsvorbereitungskurs")+
+  theme(axis.text.x=element_text(color = "black", size=11, angle=30, vjust=.8, hjust=0.8))
+```
+
+**Haupteffekt B** (Bildungsniveau der Eltern) ist **global**. Beide Kurven wachsen gleichzeitig.
+
+none: Mhs < Mc < Mu<br/>
+completed: Mhs < Mc < Mu<br/>
+
+
+```{r}
+
+ggplot(students, aes(x=test_prep_course, y=total_score, group=parental_level_of_edu, 
+colour = parental_level_of_edu, ))+
+  stat_summary(fun = mean, geom="point", size=3)+
+  stat_summary(fun = mean, geom="line")+
+  stat_summary(fun.data = mean_cl_normal, geom="errorbar",width=.2, size=.25)+
+  stat_summary(aes(label=round(..y..,2)), 
+               fun ='mean', 
+               geom="text", 
+               size=3,
+               position = position_nudge(x = -0.1, y = 1.75)
+               )+
+  labs(title = "Teilnahme in dem Prüfungsvorbereitungskurs\nin Abhängigkeit von dem Bildungsniveau der Eltern",
+       x="Teilnahme in dem Prüfungsvorbereitungskurs", 
+       y="Gesamtzahl der Leistungpunkte der Studenten", fill = "Bildungsniveau")
+
+```
+
+**Haupteffekt A** (Teilnahme in dem Prüfungsvorbereitungskurs) ist global. Alle Kurven wachsen gleichzeitig.
+
+high school: Mn < Mc<br/>
+college: Mn < Mc<br/>
+university: Mn < Mc<br/>
+
+
+**Interaktionseffekt (AxB)** ist vermutlich **nicht global**, weil die gerade Linie fast parallel sind. Das genaue Ergebnis kann nach Durchführung des ANOVA-Tests eingesehen werden.
+
+## **9. Levene-Test (Homogenität der Varianzen prüfen)**
+
+Die Gruppen stammen aus Grundgesamtheiten mit annähernd identischen Varianzen der abhängigen Variablen (siehe Levene-Test).
+
+
+```{r}
+leveneTest(data = students, 
+           total_score ~ parental_level_of_edu*test_prep_course,     # Das "*" kennzeichnet hier die Interaktion.
+           center = "mean"
+           )
+```
+Im vorliegenden Beispiel ist der Levene-Test **nicht signifikant** (F(5,994) = 1.2483, **p = 0.2844 > 0.05**), so dass von **Varianzhomogenität** ausgegangen werden kann. -> Beim Durchführen des multifaktorial ANOVA Tests braucht man **keine Welch-Korrektur**.
+
+
+*Entscheiungsregeln*
+
+*Mit Welch-Korrektur*: p < 0.05 => Ergebnis Signifikant --> Varianzen heterogen
+
+*Ohne Welch-Korrektur*: p > 0.05 => Ergebnis nicht Signifikant --> Varianzen homogen --> H0 mit Annahme Var1=Var2=... -> Var_n wird angenommen
+
+
+## **10.	Ergebnisse der mehrfaktorielle Varianzanalyse (ohne Messwiederholung)**
+
+*Keine Welch-Korrektur *
+```{r}
+mehrAnova_students <- lm(total_score ~ test_prep_course*parental_level_of_edu, data = students)
+myAnova <- Anova(mehrAnova_students , type = 3)
+myAnova
+```
++ 1) **Haupteffekt A:**<br/>
+  Das Ergebniss der mehrfaktorielle Varianzanalyse ist **signifikant**.<br/>
+  Es gibt einen Haupteffekt  der Teilnahme in dem Prüfungsvorbereitungskurs auf die Gesamtzahl der Leistungspunkte  (F(1,994) = 20.8920, **p = 5.470e-06 < 0.05**).<br/>
+  Das bedeutet, dass die Studenten in Abhängigkeit der Teilnahme in dem Prüfungsvorbereitungskurs unterschiedliche Gesamtzahl der Leistungspunkte haben.<br/>
+
++ 2) **Haupteffekt B:**<br/>
+  Das Ergebniss der mehrfaktorielle Varianzanalyse ist **signifikant**.<br/>
+  Es gibt einen Haupteffekt des Bildungsniveaus der Eltern auf die Gesamtzahl der Leistungspunkte  (F(2,994) = 16.2346, **p = 1.154e-07 < 0.05**).<br/>
+  Das bedeutet, dass die Studenten in Abhängigkeit des Bildungsniveaus seinen Eltern unterschiedliche Gesamtzahl der Leistungspunkte haben.<br/>
+
++ 3) **Interaktion A x B:**<br/>
+  Das Ergebniss der mehrfaktorielle Varianzanalyse ist **nicht signifikant**.<br/>
+  Es gibt keinen Interaktioneffekt von der Teilnahme in dem Prüfungsvorbereitungskurs und dem Bildungsniveau der Eltern auf die Gesamtzahl der Leistungspunkte (F(2,994) = 1.0313, **p = 0.3569 > 0.05**)
+
+
+## **11. Post-Hoc-Test**
+
+Ist ein Haupteffekt oder eine Interaktion signifikant, so ist zwar bestätigt, dass ein Effekt vorliegt, doch ist nach wie vor unklar, welche Faktorstufen sich unterscheiden, sobald ein Faktor mehr als zwei Ausprägungen aufweist. (Bei zwei Ausprägungen unterscheiden sich eben diese zwei Ausprägungen voneinander, sonst wäre der F-Test nicht signifikant.) Im vorliegenden Beispiel liegen ein Effekt der Teilnahme in dem Prüfungsvorbereitungskurs sowie ein Effekt des Bildungsniveaus der Eltern vor. Post-hoc-Tests können einfach eingesetzt werden, um zu prüfen, welche Levels des Bildungsniveaus der Eltern sich unterscheiden. 
+
+Wie bereits erwähnt wurde, beinhaltet der Faktor Bildungsniveau der Eltern drei Stufen. Aus dem signifikanten Haupteffekt lässt sich nicht ableiten, welche der Faktorstufen einen signifikant unterschiedlichen Einfluss auf die abhängige Variable haben. Zu diesem Zweck werden Tukey-korrigierte Mehrfachvergleiche berechnet.
+
+Bei der Berechnung von Post-hoc-Tests wird im Prinzip für jede Kombination von zwei Mittelwerten ein t-Test durchgeführt. Im aktuellen Beispiel der Bildungsniveau der Eltern mit drei Gruppen, bzw. Die Teilnahme in dem Prüfungsvorbereitungskurs zwei Gruppen sind dies **15 Tests**. Multiple Tests sind jedoch problematisch, da der **Alpha-Fehler** (die fälschliche Ablehnung der Nullhypothese) mit der Anzahl der Vergleiche **steigt**. Wird nur ein t-Test mit einem Signifikanzlevel von 0.05 durchgeführt, so beträgt die Wahrscheinlichkeit des Nicht-Eintreffens des Alpha-Fehlers 95%. Werden jedoch 15 solcher Paarvergleiche vorgenommen, so beträgt die Nicht-Eintreffens-Wahrscheinlichkeit des Alpha-Fehlers (.95)^15 = .463. Um die Wahrscheinlichkeit des Eintreffens des **Alpha-Fehlers** zu bestimmen, wird **1 -.463 = 0.537** gerechnet. Die Wahrscheinlichkeit des Eintreffens des Alpha-Fehlers **liegt somit bei 53.7%**. Diese Fehlerwahrscheinlichkeit wird als “Familywise Error Rate” bezeichnet.
+
+*Um dieses Problem zu beheben, kann zum Beispiel die Tukey-Korrektur angewendet werden. Hierbei wird α durch die Anzahl der Paarvergleiche dividiert. Im hier aufgeführten Fall ist dies .05/15 = .0033. Bei diesem Kozept handelt es sich um eine allgemeine Information.*
+
+
+**Die Tukey berücksichtigt die Korrektur, daher kann weiter gegen 0.05 getestet werden.**
+
+
+```{r}
+students_PostHoc <- aov(data = students, total_score ~ parental_level_of_edu*test_prep_course) 
+students_TukeyHSD_PostHoc = TukeyHSD(students_PostHoc)
+students_TukeyHSD_PostHoc
+```
+
+**Es sollten folgende vier Aspekte geklärt werden:**
+
++  1. welche Kombination wird signifikant und welche nicht?
++  2. Generalisierung / Unabhängigkeit der Gruppen
++  3. Gruppenbildung
++  4. Interaktion in der Kombination
+
+
+### Kombi: test_prep_course<br/>
+Hier ist der Unterschied zwischen Gruppen 'completed' und 'none' aus dem Faktor A 'test_prep_course' **signifikant (p = 0 < 0.05).**
+Das bedeutet, dass die Studenten in Abhängigkeit der Teilnahme in dem Prüfungsvorbereitungskurs unterschiedliche Gesamtzahl der Leistungpunkte haben.<br/>
+**Beide Gruppen sind generalisierbar.** 
+
+### Kombi: parental_level_of_edu<br/>
+Hier ist der Unterschied zwischen drei Gruppen 'high school', 'college' und 'university' aus dem Faktor B 'parental_level_of_edu' **signifikant (für alle Kombinationnen p < 0.05)**.
+Das bedeutet, dass die Studenten in Abhängigkeit dem Bildungsniveau der Eltern unterschiedliche Gesamtzahl der Leistungpunkte haben.<br/>
+**Alle drei Gruppen sind generalisierbar.** 
+
+### Kombi: Interaktion 'test_prep_course | parental_level_of_edu'<br/>
+
+```{r, echo = FALSE}
+edu_course <- c("high school", "college", "university")
+none <- c("+", "-", "-")
+completed <- c("-", "-", "-")
+
+Tabelle2 <- data.frame(edu_course, none, completed)
+colnames(Tabelle2) <-c("Education|Course", "none", "completed")
+Tabelle2
+
+```
+
+Post-Hoc-Test hat festgestellt:
+
+1. Es gibt keinen Unterschied in der Gesamtzahl der Leistungspunkte zwischen allen drei Gruppen des Bildungsniveaus der Eltern für Studenten, die Prüfungsvorbereitungskurs gemacht haben. Im Post_hoc Test gibt es Kombinationnen, in denen **p > 0.05**
+
+2. Es gibt keinen Unterschied in der Gesamtzahl der Leistungspunkte zwischen 'college' und 'university' Ausbildung der Eltern in die Gruppe, in der Studenten keinen Prüfungsvorbereitungskurs gemacht haben. Im Post_hoc Test gibt es Kombinationnen, in denen **p > 0.05**
+
+3. Die Gesamtzahl der Leistungspunkte unterschiedet sich signifikant in der Gruppe ('high school' - 'none'). Im Post-Hoc Test alle Kombinationen mit dieser Gruppe haben **p < 0.05**.
+
+=> **Eine Gruppe ist generalisierbar ('high school' - 'none')**, wo die Eltern der Studenten ein 'high school' Abschluss haben und die Studenten haben nicht in dem Prüfungsvorbereitungskurs teilgenommen.
+
+
+Da die Interaktion von Teilnahme in dem Prüfungsvorbereitungskurs und Bildungsniveau der Eltern, auf die Gesamtzahl der Leistungspunkte ist nicht signifikant ist (p > 0.05), könnte man zukünftig die einfaktorielle ANOVA für den Faktor B (Bildungsniveau der Eltern) durchführen sowie den t-Test füh Faktor A (Teilnahme in dem Prüfungsvorbereitungskurs).
+
+*Es könnten drei Gruppen einfaktorielle ANOVA für den Faktor B (Bildungsniveau der Eltern)  gebildet werden sowie zwei Gruppen für den t-Test für Faktor A (Teilnahme in dem Prüfungsvorbereitungskurs). Es gibt keinen Sinn Interaktionsgruppe (Bildungsniveau der Eltern X Teilnahme in dem Prüfungsvorbereitungskurs) für weitere mehrfaktoriellen ANOVA Test zu bilden.*
+
+
+## **12. Das par. Eta-Quadrat**
+
+Das partielle Eta-Quadrat (partielles η2) ist in Abbildung ausgegeben. Es ist ein Mass für die Effektgrösse: Es setzt die Variation, die durch einen Faktor erklärt wird, in Bezug mit jener Variation, die nicht durch andere Faktoren im Modell erklärt wird. Das heisst, es wird ausschliesslich jene Variation betrachtet, welche nicht durch die anderen Faktoren im Modell erklärt wird. Das partielle Eta-Quadrat zeigt, welchen Anteil davon ein Faktor erklärt:
+
+
+$$
+\eta²_{parA} = \frac{QS_A}{QS_A+QS_{inn}}
+$$
+
+
+$$
+\eta²_{parB} = \frac{QS_B}{QS_B+QS_{inn}}
+$$
+$$
+\eta²_{parAxB} = \frac{QS_{AxB}}{QS_{AxB}+QS_{inn}}
+$$
+
+
+#### Berechnung der ETA-Matrix für den Einfluss der Einzel-Effkete und des Interaktions-Effekts
+```{r}
+eta <- effectsize::eta_squared(mehrAnova_students, partial = TRUE)
+eta
+```
+
+**Für die Teilnahme in dem Prüfungsvorbereitungskurs** beträgt das partielle **Eta-Quadrat 0.07**. Das heisst, die Teilnahme in dem Prüfungsvorbereitungskurs erklärt 7% derjenigen Fehlervariation, die das Modell hätte, wäre die Teilnahme in dem Prüfungsvorbereitungskurs nicht im Modell.
+
+**Für das Bildungsniveau der Eltern** beträgt das partielle **Eta-Quadrat 0.05**. Das heisst, das Bildungsniveau der Eltern erklärt 5% derjenigen Fehlervariation, die das Modell hätte, wäre das Bildungsniveau der Eltern nicht im Modell.
+
+
+Das partielle **Eta-Quadrat der Interaktion beträgt 2.07e-03**. Die Interaktion kann nicht benutzen werden um die Variation der Gesamtzahl der Leistungpunkte zu erklären.
+
+
+## **13.	Berechnung der Effektstärke**
+
+$$f=\sqrt\frac{\eta^{2}}{1-\eta^{2}}=\sqrt\frac{eta^{2}}{1-eta^{2}}$$
+
+#### Effektstärke 
+
+```{r}
+eff<- sqrt(eta$Eta2/(1-eta$Eta2))
+eff
+```
+Um zu beurteilen, wie groß dieser Effekt ist, kann man sich an der Einteilung von Cohen (1988) orientieren:
+
+$$
+\begin{align}
+\text{Schwacher Effekt: } 0.10 &< ||f|| < 0.25             \\
+\text{Schwacher bis mittlerer Effekt: } 0.25 &= ||f||      \\
+\text{Mittlerer Effekt: } 0.25 &< ||f|| < 0.40             \\
+\text{Mittlerer bis starker Effekt: }0.40 &= ||f||         \\
+\text{Starker Effekt: } 0.40 &< ||f||        
+\end{align}
+$$
+
+#### Effeckte Auflistung
+
+```{r echo = FALSE}
+
+sprintf("Effektstärke für die Teilnahme in dem Prüfungsvorbereitungskurs: f= %.3f", eff[1])
+```
+
+Nach Cohen (1988) handelt es sich bei dem Einfluss der Teilnahme in dem Prüfungsvorbereitungskurs auf die Gesamtzahl der Leistungpunkte um einen **mittleren Effekt (f = 0.273)**.
+
+
+```{r echo = FALSE}
+sprintf("Effektstärke für das Bildungsniveau der Eltern: f= %.3f",eff[2])
+```
+Nach Cohen (1988) handelt es sich bei dem Einfluss des Bildungsniveaus der Eltern auf die Gesamtzahl der Leistungpunkte um einen **schwachen Effekt (f = 0.231)**.
+
+```{r echo = FALSE}
+sprintf("Effektstärke für die Interaktion: f= %.3f",eff[3])
+```
+
+Nach Cohen (1988) handelt es sich bei dem Einfluss der Interaktion von der Teilnahme in dem Prüfungsvorbereitungskurs mit dem Bildungsniveau der Eltern im Bezug auf die Gesamtzahl der Leistungpunkte um **keinen Effekt (f = 0.046)**.
+
+
+
+## **14. Aussage** 
+
+### Ergebnis der Hypothesen-Prüfung
+
+Es zeigt sich, dass es einen Einfluss der Teilnahme in dem Prüfungsvorbereitungskurs auf die Gesamtzahl der Leistungpunkte gibt (F(1,994) = 20.8920, **p = 5.470e-06 < 0.05**). **H0 für den Haupteffekt A wird verworfen.**
+
+Je nach dem Bildungsniveau der Eltern gibt es einen Einfluss auf die Gesamtzahl der Leistungpunkte (F(2,994) = 16.2346, **p = 1.154e-07 < 0.05**). **H0 für den Haupteffekt B wird verworfen.**
+
+Der Einfluss des Interaktionsterms von der Teilnahme in dem Prüfungsvorbereitungskurs und dem Bildungsniveau der Eltern auf die Gesamtzahl der Leistungpunkte ist **nicht signifikant** (F(2,994) = 1.0313, **p = 0.3569 > 0.05**). **H0 für den Haupteffekt AxB wird beibehalten.**
+
+ 
+ 
+### Ergebnis des Post-Hoc-Tests
+
++ Für den **Faktor A** zeigt Tukey-PostHoc-Tests, dass der Unterschied zwischen zwei Gruppen: mit der Teilnahme in dem Prüfungsvorbereitungskurs  (MW = 218.01 , SD = 39.11, n = 358) und ohne den Prüfungsvorbereitungskurs (MW = 195.12 , SD = 42.56, n = 642) **signifikant (p = 0 < 0.05)** ist. 
+
+  **Beide Gruppen sind generalisierbar.** 
+
++ Für den **Faktor B** zeigt Tukey-PostHoc-Tests, dass die Gesamtzahl der Leistungspunkte bezüglich des Bildungsniveau der Eltern sich auch **signifikant (p < 0.05) unterschiedet**:
+
+  "high school” - (MW = 192.17 , SD = 42.75, n = 375)<br/>
+  “college” - (MW = 207.05 , SD = 41.06, n = 448)<br/>
+  “university” - (MW = 217.45 , SD = 41.45, n = 177)
+
+  **Alle drei Gruppen sind generalisierbar.** 
+
++ Für die **Interaktion (AXB)** von der Teilnahme in dem Prüfungsvorbereitungskurs und dem Bildungsniveau der Eltern zeigt der Tukey-PostHoc-Test, dass es einen **signifikaten Unterschied** auf die Gesamtzahl der Leistungpunkte nur für die Gruppe **‘high school’ - ‘none’** **p < 0.05**  (MW = 185.11 , SD = 43.23, n = 242)
+
+  Für die **restlichen fünf Gruppen** gibt es **kein Interaktionseffekt** auf die Gesamtzahl der Leistungspunkte der Studenten. Im Post_hoc Test gibt es für jede Gruppe Kombinationnen, in denen **p > 0.05**
+  
+  **Eine Gruppe ist generalisierbar (‘high school’ - ‘none’)**, wo die Eltern der Studenten ein ‘high school’ Abschluss haben und die Studenten an keinem Prüfungsvorbereitungskurs teilgenommen haben.
+
+  An dieser Stelle ist es nicht erfolderlich/zwecklos eine Interaktionsgruppe für weitere mehrfaktoriellen ANOVA Test zu bilden.
+
+
+### Effektstärken
+
+Die Effektstärke ist für den **Haupteffekt(A)** - der Teilnahme in dem Prüfungsvorbereitungskurs **nach Cohen (1988) ein mittleren Effekt (f = 0.273) **
+
+Die Effektstärke ist für den **Haupteffekt(B)** - dem Bildungsniveau der Eltern **nach Cohen (1988) ein schwachen Effekt (f = 0.231)**
+
+Für die **Interaktion(AxB)** gibt es **nach Cohen (1988) keinen Effekt (f = 0.046)**
+
+
+------------------------------------------------------------------------------
+## **Begründung für die Wahl der Gruppen**
+
+```{r}
+students_test$parental_level_of_edu<-factor(students_test$parental_level_of_edu, 
+levels=c("high school", "some high school", "some college", "associate's degree", "bachelor's degree", "master's degree")) 
+```
+
+```{r}
+pairwise.t.test(students_test$total_score, students_test$parental_level_of_edu, data=students_test, pool.sd=FALSE,var.equal=T)
+
+```
+
+```{r, echo = FALSE}
+edu_course <- c("high school", "some high school", "some college", "associate's degree", "bachelor's degree", "master's degree")
+high_school <- c("*", "-", "+", "+", "+", "+")
+some_high_school <- c("", "*", "-", "+", "+", "+")
+some_college <- c("", "", "*", "-", "-", "-")
+associates_degree <- c("", "", "", "*", "-", "-")
+bachelors_degree <- c("", "", "", "", "*", "-")
+masters_degree <- c("", "", "", "", "", "*")
+
+Tabelle3 <- data.frame(edu_course, high_school, some_high_school, some_college, associates_degree, bachelors_degree, masters_degree)
+colnames(Tabelle3) <-c("Education|Course", "high school", "some high school", "some college", "associate's degree", "bachelor's degree", "master's degree")
+kable(Tabelle3, format = "markdown")
+
+```
+
+"high school", "some high school" => "high school" <br/>
+"some college", "associate's degree" => "college" <br/>
+"bachelor's degree", "master's degree" => "university" <br/>
+
+## **Testverfahren ohne Ausreißer**
+
+```{r}
+# Prüfung
+ausreisser_test_prep_course <- boxplot(students$total_score~students$test_prep_course, plot=FALSE)$out
+
+print(ausreisser_test_prep_course)
+
+```
+```{r}
+#Löschen
+students <- students[-which(students$total_score %in% ausreisser_test_prep_course),]
+```
+
+
+*parental_level_of_edu*
+```{r}
+ausreisser_parental_level_of_edu <- boxplot(students$total_score~students$parental_level_of_edu, plot=FALSE)$out
+
+print(ausreisser_parental_level_of_edu)
+
+```
+
+```{r}
+students <- students[-which(students$total_score %in% ausreisser_parental_level_of_edu),]
+```
+
+
+## 6) Boxplot 
+
+Boxplot hier nur zur Info (bessere Visualisierung der Gesamt-Zusammenhänge).
+
+
+
+
+```{r}
+ggplot(students, 
+       aes(x = test_prep_course, 
+           y = total_score, 
+           fill=factor(test_prep_course))
+       ) +
+  geom_boxplot() +
+  theme(panel.background = element_rect(size = 0.5, fill = "gray91", colour = "gray", linetype='solid'),
+        panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "darkgray"),
+        panel.grid.minor = element_line(size = 0.5, linetype = 'solid', colour = "gray"),
+        )+
+  labs(x="Prüfungsvorbereitungskurs", y="Gesamtzahl der Leistungpunkte der Studenten", fill = "Prüfungsvorbereitungskurs")
+
+
+```
+
+
+
+
+```{r}
+ggplot(students, 
+       aes(x = parental_level_of_edu, 
+           y = total_score, 
+           fill=factor(parental_level_of_edu))
+       ) +
+  geom_boxplot() +
+  theme(panel.background = element_rect(size = 0.5, fill = "gray91", colour = "gray", linetype='solid'),
+        panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "darkgray"),
+        panel.grid.minor = element_line(size = 0.5, linetype = 'solid', colour = "gray"),
+        axis.text.x=element_text(color = "black", size=11, angle=30, vjust=.8, hjust=0.8))+
+  
+  labs(x="Bildungsniveau der Eltern", y="Gesamtzahl der Leistungpunkte der Studenten", fill = "Bildungsniveau")
+```
+
+
+```{r}
+ggplot(students, 
+       aes(x = test_prep_course, 
+           y = total_score, 
+           fill=factor(parental_level_of_edu))
+       ) +
+  geom_boxplot() +
+  theme(panel.background = element_rect(size = 0.5, fill = "gray91", colour = "gray", linetype='solid'),
+        panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "darkgray"),
+        panel.grid.minor = element_line(size = 0.5, linetype = 'solid', colour = "gray"),
+        )+
+  labs(x="Prüfungsvorbereitungskurs", y="Gesamtzahl der Leistungpunkte der Studenten", fill = "Bildungsniveau")
+```
+
+
+## 7) Deskriptive Statistiken
+
+### Der Einfluss der Teilnahme in dem Prüfungsvorbereitungskurs auf die Gesamtzahl der Leistungpunkte
+
+```{r}
+summarize1 <- students %>%
+group_by(test_prep_course) %>%
+summarize(Anzahl = n(), Mittelwert = mean(total_score), Median = median(total_score), Standardabweichung = sd(total_score)) %>%
+mutate_if(is.numeric, round, 2)
+
+# sortieren nach dem Mittelwert
+summarize1[ order(summarize1$Mittelwert), ]
+```
+
+
+
+### Der Einfluss dem Bildungsniveau der Eltern auf die Gesamtzahl der Leistungpunkte
+
+
+```{r}
+summarize1 <- students %>%
+group_by(parental_level_of_edu) %>%
+summarize(Anzahl = n(), Mittelwert = mean(total_score), Median = median(total_score), Standardabweichung = sd(total_score)) %>%
+mutate_if(is.numeric, round, 2)
+
+# sortieren nach dem Mittelwert
+summarize1[ order(summarize1$Mittelwert), ]
+```
+
+### Interaktion von der Teilnahme in dem Prüfungsvorbereitungskurs und dem Bildungsniveau der Eltern bezüglich der Gesamtzahl der Leistungspunkte
+
+```{r}
+ students %>%
+  group_by(test_prep_course, parental_level_of_edu) %>%
+  summarize(Anzahl = n(), 
+            Mittelwert = mean(total_score), 
+            Median = median(total_score), 
+            Standardabweichung = sd(total_score)
+            ) %>%
+  mutate_if(is.numeric, round, 2)
+
+```
+
+## 8) Profildiagramm
+
+
+```{r}
+
+ggplot(students, aes(x=parental_level_of_edu, y=total_score, group=test_prep_course, 
+  colour = test_prep_course, ))+
+  stat_summary(fun = mean, geom="point", size=3)+
+  stat_summary(fun = mean, geom="line")+
+  stat_summary(fun.data = mean_cl_normal, geom="errorbar",width=.2, size=.25)+
+  stat_summary(aes(label=round(..y..,2)), 
+               fun ='mean', 
+               geom="text", 
+               size=3,
+               position = position_nudge(x = -0.25, y = 1.75)
+               )+
+  labs(title = "Bildungsniveau der Eltern in Abhängigkeit\nvon der Teilnahme in dem Prüfungsvorbereitungskurs",
+    x="Bildungsniveau der Eltern", y="Gesamtzahl der Leistungpunkte der Studenten", fill = "Prüfungsvorbereitungskurs")+
+  theme(axis.text.x=element_text(color = "black", size=11, angle=30, vjust=.8, hjust=0.8))
+```
+
+
+
+
+```{r}
+
+ggplot(students, aes(x=test_prep_course, y=total_score, group=parental_level_of_edu, 
+colour = parental_level_of_edu, ))+
+  stat_summary(fun = mean, geom="point", size=3)+
+  stat_summary(fun = mean, geom="line")+
+  stat_summary(fun.data = mean_cl_normal, geom="errorbar",width=.2, size=.25)+
+  stat_summary(aes(label=round(..y..,2)), 
+               fun ='mean', 
+               geom="text", 
+               size=3,
+               position = position_nudge(x = -0.1, y = 1.75)
+               )+
+  labs(title = "Teilnahme in dem Prüfungsvorbereitungskurs\nin Abhängigkeit von dem Bildungsniveau der Eltern",
+       x="Teilnahme in dem Prüfungsvorbereitungskurs", 
+       y="Gesamtzahl der Leistungpunkte der Studenten", fill = "Bildungsniveau")
+
+```
+
+## 9) Levene-Test (Homogenität der Varianzen prüfen)
+Die Gruppen stammen aus Grundgesamtheiten mit annähernd identischen Varianzen der abhängigen Variablen (siehe Levene-Test).
+
+
+```{r}
+leveneTest(data = students, 
+           total_score ~ parental_level_of_edu*test_prep_course,     # Das "*" kennzeichnet hier die Interaktion.
+           center = "mean"
+           )
+```
+
+## 10)	Ergebnisse der mehrfaktorielle Varianzanalyse (ohne Messwiederholung)
+
+*Keine Welch-Korrektur *
+```{r}
+mehrAnova_students <- lm(total_score ~ test_prep_course*parental_level_of_edu, data = students)
+myAnova <- Anova(mehrAnova_students , type = 3)
+myAnova
+```
+
+## 11) Post-Hoc-Test
+
+
+```{r}
+students_PostHoc <- aov(data = students, total_score ~ parental_level_of_edu*test_prep_course) 
+students_TukeyHSD_PostHoc = TukeyHSD(students_PostHoc)
+students_TukeyHSD_PostHoc
+```
+
+```{r}
+edu_course <- c("high school", "college", "university")
+none <- c("+", "-", "-")
+completed <- c("-", "-", "-")
+
+Tabelle1 <- data.frame(edu_course, none, completed)
+colnames(Tabelle1) <-c("Education|Course", "none", "completed")
+Tabelle1
+
+```
+
+## 12) Das par. Eta-Quadrat
+
+```{r}
+eta <- effectsize::eta_squared(mehrAnova_students, partial = TRUE)
+print("ETA-Matrix:")
+eta
+```
+
+## 13)	Berechnung der Effektstärke
+
+$$f=\sqrt\frac{\eta^{2}}{1-\eta^{2}}=\sqrt\frac{eta^{2}}{1-eta^{2}}$$
+
+#### Effektstärke 
+
+```{r}
+eff<- sqrt(eta$Eta2/(1-eta$Eta2))
+eff
+```
+
+#### Effeckte Auflistung
+
+```{r}
+
+sprintf("Effektstärke für die Teilnahme in dem Prüfungsvorbereitungskurs: f= %.3f", eff[1])
+```
+
+
+```{r}
+sprintf("Effektstärke für das Bildungsniveau der Eltern: f= %.3f",eff[2])
+```
+```{r}
+sprintf("Effektstärke für die Interaktion: f= %.3f",eff[3])
+```
+
+
