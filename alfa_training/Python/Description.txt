@@ -1,0 +1,55 @@
+<p><span style="font-family: Arial, Helvetica, sans-serif; font-size: 12px;"><strong>515K Hotel Reviews Data in Europe</strong></span><span style="font-size: 10px;"><br></span></p>
+<p><span style="font-size: 10px;"><strong><span style="font-family: Arial, Helvetica, sans-serif;">Acknowledgements</span></strong></span></p>
+<p><span style="font-size: 10px;"><span style="font-family: Arial, Helvetica, sans-serif;">The data was scraped from Booking.com. All data in the file is publicly available to everyone already. Data is originally owned by Booking.com. Please contact me through my profile if you want to use this dataset somewhere else.</span></span></p>
+<p><span style="font-size: 10px;"><span style="font-family: Arial, Helvetica, sans-serif;"><br></span></span></p>
+<p><span style="font-size: 10px;"><span style="font-family: Arial, Helvetica, sans-serif;"><strong>Data Context</strong></span></span></p>
+<p><span style="font-size: 10px;"><span style="font-family: Arial, Helvetica, sans-serif;">This dataset contains 515,000 customer reviews and scoring of 1493 luxury hotels across Europe. Meanwhile, the geographical location of hotels are also provided for further analysis.</span></span></p>
+<p><span style="font-size: 10px;"><span style="font-family: Arial, Helvetica, sans-serif;"><br></span></span></p>
+<p><span style="font-size: 10px;"><span style="font-family: Arial, Helvetica, sans-serif;"><strong>Data Content</strong></span></span></p>
+<p><span style="font-size: 10px;"><span style="font-family: Arial, Helvetica, sans-serif;">The csv file contains 17 fields. The description of each field is as below:</span></span></p>
+<ul>
+    <li><span style="font-size: 10px;"><span style="font-family: Arial, Helvetica, sans-serif;">Hotel_Address: Address of hotel.</span></span></li>
+    <li><span style="font-size: 10px;"><span style="font-family: Arial, Helvetica, sans-serif;">Review_Date: Date when reviewer posted the corresponding review.</span></span></li>
+    <li><span style="font-size: 10px;"><span style="font-family: Arial, Helvetica, sans-serif;">Average_Score: Average Score of the hotel, calculated based on the latest comment in the last year.</span></span></li>
+    <li><span style="font-size: 10px;"><span style="font-family: Arial, Helvetica, sans-serif;">Hotel_Name: Name of Hotel</span></span></li>
+    <li><span style="font-size: 10px;"><span style="font-family: Arial, Helvetica, sans-serif;">Reviewer_Nationality: Nationality of Reviewer</span></span></li>
+    <li><span style="font-size: 10px;"><span style="font-family: Arial, Helvetica, sans-serif;">Negative_Review: Negative Review the reviewer gave to the hotel. If the reviewer does not give the negative review, then it should be: &apos;No Negative&apos;</span></span></li>
+    <li><span style="font-size: 10px;"><span style="font-family: Arial, Helvetica, sans-serif;">ReviewTotalNegativeWordCounts: Total number of words in the negative review.</span></span></li>
+    <li><span style="font-size: 10px;"><span style="font-family: Arial, Helvetica, sans-serif;">Positive_Review: Positive Review the reviewer gave to the hotel. If the reviewer does not give the negative review, then it should be: &apos;No Positive&apos;</span></span></li>
+    <li><span style="font-size: 10px;"><span style="font-family: Arial, Helvetica, sans-serif;">ReviewTotalPositiveWordCounts: Total number of words in the positive review.</span></span></li>
+    <li><span style="font-size: 10px;"><span style="font-family: Arial, Helvetica, sans-serif;">Reviewer_Score: Score the reviewer has given to the hotel, based on his/her experience</span></span></li>
+    <li><span style="font-size: 10px;"><span style="font-family: Arial, Helvetica, sans-serif;">TotalNumberofReviewsReviewerHasGiven: Number of Reviews the reviewers has given in the past.</span></span></li>
+    <li><span style="font-size: 10px;"><span style="font-family: Arial, Helvetica, sans-serif;">TotalNumberof_Reviews: Total number of valid reviews the hotel has.</span></span></li>
+    <li><span style="font-size: 10px;"><span style="font-family: Arial, Helvetica, sans-serif;">Tags: Tags reviewer gave the hotel.</span></span></li>
+    <li><span style="font-size: 10px;"><span style="font-family: Arial, Helvetica, sans-serif;">dayssincereview: Duration between the review date and scrape date.</span></span></li>
+    <li><span style="font-size: 10px;"><span style="font-family: Arial, Helvetica, sans-serif;">AdditionalNumberof_Scoring: There are also some guests who just made a scoring on the service rather than a review. This number indicates how many valid scores without review in there.</span></span></li>
+    <li><span style="font-size: 10px;"><span style="font-family: Arial, Helvetica, sans-serif;">lat: Latitude of the hotel</span></span></li>
+    <li><span style="font-size: 10px;"><span style="font-family: Arial, Helvetica, sans-serif;">lng: longtitude of the hotel</span></span></li>
+</ul>
+<p><span style="font-size: 10px;"><span style="font-family: Arial, Helvetica, sans-serif;"><span style="font-size: 10px;"><span style="font-family: Arial, Helvetica, sans-serif;"><strong>New Columns</strong></span></span></span></span></p>
+<ul>
+    <li><span style="font-family: Arial, Helvetica, sans-serif; font-size: 10px;">Country: Name of Country</span></li>
+    <li><span style="font-family: Arial, Helvetica, sans-serif; font-size: 10px;">Days_Stayed: the number of days the person spent at the hotel</span></li>
+    <li><span style="font-family: Arial, Helvetica, sans-serif; font-size: 10px;">Month: Month of Review</span></li>
+	<li><span style="font-family: Arial, Helvetica, sans-serif; font-size: 10px;">Year: Year of Review</span></li>
+    <li><span style="font-family: Arial, Helvetica, sans-serif; font-size: 10px;">Review_Type: (negative, positive)</span></li>
+    <li><span style="font-family: Arial, Helvetica, sans-serif; font-size: 10px;">Submitted_Mobile_Device: (yes, no)</span></li>
+    <li><span style="font-family: Arial, Helvetica, sans-serif; font-size: 10px;">Traveler_type: (couple, solo, group, with friends, with young children, with older children)</span></li>
+    <li><span style="font-family: Arial, Helvetica, sans-serif; font-size: 10px;">Trip_Type: (leisure, business, None)</span></li>
+    <li><span style="font-family: Arial, Helvetica, sans-serif; font-size: 10px;">With_pets: (yes, no)</span></li>
+
+</ul>
+<p><span style="font-size: 10px;"><span style="font-family: Arial, Helvetica, sans-serif;">In order to keep the text data clean, I removed unicode and punctuation in the text data and transform text into lower case. No other preprocessing was performed.</span></span></p>
+<p><br></p>
+<p><span style="font-size: 10px;"><span style="font-family: Arial, Helvetica, sans-serif;"><strong>Inspiration</strong></span></span></p>
+<p><span style="font-size: 10px;"><span style="font-family: Arial, Helvetica, sans-serif;">The dataset is large and informative, I believe you can have a lot of fun with it! Let me put some ideas below to futher inspire kagglers!</span></span></p>
+<ul>
+    <li><span style="font-size: 10px;"><span style="font-family: Arial, Helvetica, sans-serif;">Fit a regression model on reviews and score to see which words are more indicative to a higher/lower score</span></span></li>
+    <li><span style="font-size: 10px;"><span style="font-family: Arial, Helvetica, sans-serif;">Perform a sentiment analysis on the reviews</span></span></li>
+    <li><span style="font-size: 10px;"><span style="font-family: Arial, Helvetica, sans-serif;">Find correlation between reviewer&apos;s nationality and scores.</span></span></li>
+    <li><span style="font-size: 10px;"><span style="font-family: Arial, Helvetica, sans-serif;">Beautiful and informative visualization on the dataset.</span></span></li>
+    <li><span style="font-size: 10px;"><span style="font-family: Arial, Helvetica, sans-serif;">Clustering hotels based on reviews</span></span></li>
+    <li><span style="font-size: 10px;"><span style="font-family: Arial, Helvetica, sans-serif;">Simple recommendation engine to the guest who is fond of a special characteristic of hotel.</span></span></li>
+</ul>
+<p><span style="font-size: 10px;"><span style="font-family: Arial, Helvetica, sans-serif;">The idea is unlimited! Please, have a look into data, generate some ideas and leave a master kernel here! I am ready to upvote your ideas and kernels! Cheers!</span></span></p>
+<p><span style="font-family: Arial, Helvetica, sans-serif;"><a href="https://www.kaggle.com/jiashenliu/515k-hotel-reviews-data-in-europe"><span style="font-size: 10px;">https://www.kaggle.com/jiashenliu/515k-hotel-reviews-data-in-europe</span></a></span></p>
